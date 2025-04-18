@@ -1,0 +1,7 @@
+---
+
+- name: Install Wireguard server and tools
+  ansible.builtin.package:
+    name:
+      - wireguard
+      - qrencode

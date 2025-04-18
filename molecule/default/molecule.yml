@@ -1,0 +1,6 @@
+---
+driver:
+  name: containers
+platforms:
+  - name: wireguard_ubuntu
+    image: docker.io/library/ubuntu:latest

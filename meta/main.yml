@@ -1,0 +1,11 @@
+---
+galaxy_info:
+    namespace: wsmirnow
+    role_name: wireguard
+    description: Setup Wireguard server.
+    min_ansible_version: '2.9'
+    author: Waldemar Smirnow
+    license: MIT
+    galaxy_tags:
+        - wireguard
+        - vpn
