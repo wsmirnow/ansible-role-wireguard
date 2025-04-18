@@ -1,0 +1,52 @@
+#!/bin/env bash
+
+CLIENT_NAME="$1"
+
+if [ -z "$CLIENT_NAME" ]; then
+    >&2 echo "Please provide a client name as first argument"
+    exit 1
+fi
+
+if [ -f "/etc/wireguard/clients/$CLIENT_NAME.conf" ]; then
+    >&2 echo "Client configuration with this name already exists"
+    exit 1
+fi
+
+set -eu
+
+# Generate client key
+wg genkey | tee /etc/wireguard/clients/"$CLIENT_NAME".key | wg pubkey > /etc/wireguard/clients/"$CLIENT_NAME".key.pub
+
+CLIENT_IDX="$(find /etc/wireguard/clients -name "*.conf" | wc -l)"
+CLIENT_IDX="$((CLIENT_IDX+2))"
+read -r _{,} gateway _ iface _ ip _ < <(ip r g 1.0.0.0)
+read -r _{,,,} gateway6 _ iface6 _ ip6 _ < <(ip r g 1::)
+
+# Generate client config
+cat <<-EOF > /etc/wireguard/clients/"$CLIENT_NAME".conf
+[Interface]
+Address = 10.200.200.$CLIENT_IDX, fd8f:1985:cafe::$CLIENT_IDX
+PrivateKey = $(cat /etc/wireguard/clients/"$CLIENT_NAME".key)
+DNS        = 8.8.8.8, 2001:4860:4860::8888
+
+[Peer]
+PublicKey = $(cat /etc/wireguard/server.key.pub)
+Endpoint = $ip:51820
+#Endpoint = [$ip6]:51820
+AllowedIPs = 0.0.0.0/0, ::/0
+EOF
+
+# Create Wireguard server, client configuration part
+cat <<-EOF >> /etc/wireguard/wg0.conf
+
+# $CLIENT_NAME
+[Peer]
+PublicKey = $(cat /etc/wireguard/clients/"$CLIENT_NAME".key.pub)
+AllowedIPs = 10.200.200.$CLIENT_IDX/32, fd8f:1985:cafe::$CLIENT_IDX/128
+EOF
+
+# Reload Wireguard daemon
+systemctl reload wg-quick@wg0
+
+echo "Import client configuration with following QR code."
+qrencode -t ansiutf8 < /etc/wireguard/clients/"$CLIENT_NAME".conf

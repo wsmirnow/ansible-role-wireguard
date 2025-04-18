@@ -2,5 +2,30 @@
 driver:
   name: containers
 platforms:
+  - name: wireguard_debian
+    image: docker.io/library/debian:stable
+    pre_build_image: false
+    dockerfile: Dockerfile.debian
+    command: /sbin/init
+    tmpfs:
+      "/tmp": "exec"
+      "/run": "rw,noexec,nosuid,nodev"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    capabilities:
+      - NET_ADMIN
   - name: wireguard_ubuntu
     image: docker.io/library/ubuntu:latest
+    pre_build_image: false
+    dockerfile: Dockerfile.debian
+    command: /sbin/init
+    tmpfs:
+      "/tmp": "exec"
+      "/run": "rw,noexec,nosuid,nodev"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    capabilities:
+      - NET_ADMIN
+lint: |
+  set -e
+  ansible-lint

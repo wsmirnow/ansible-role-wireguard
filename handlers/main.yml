@@ -1,0 +1,11 @@
+---
+- name: Restart Wireguard service
+  ansible.builtin.service:
+    name: wg-quick@wg0.service
+    state: restarted
+
+- name: Reload system config   # noqa: no-changed-when
+  ansible.builtin.command:
+    # This command fails with for Debian on Github action, we should skip it for testing
+    cmd: /usr/sbin/sysctl --system
+  when: 'lookup("ansible.builtin.env", "GITHUB_RUN_SYSCTL_HANDLER") | default(True) | bool'
